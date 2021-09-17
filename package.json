@@ -1,0 +1,25 @@
+{
+  "name": "node_cs_arma",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarcelAssu/Node_cs_arma.git"
+  },
+  "keywords": [
+    "node",
+    "api",
+    "express",
+    "pg"
+  ],
+  "author": "Marcel Assunção",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MarcelAssu/Node_cs_arma/issues"
+  },
+  "homepage": "https://github.com/MarcelAssu/Node_cs_arma#readme"
+}
