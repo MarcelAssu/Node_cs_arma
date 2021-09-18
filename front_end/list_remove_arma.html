@@ -1,0 +1,238 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Vue - Armas</title>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="CS_Estilo.css" />
+
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+        <script src="https://unpkg.com/vuelidate@0.7.4/dist/vuelidate.min.js"></script>
+        <script src="https://unpkg.com/vuelidate@0.7.4/dist/validators.min.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+
+    </head> 
+    <body>         
+        <div id="app" class="container">               
+            <header class="cabecalho">
+                <h2>Listagem de Armas do CS</h2> 
+                <nav class="menu">
+                    <ul class="menu_links">
+                        <li class="menu_item"><a class="menu_link" href="Vue_CS_Municao.html">Munições</a></li>
+                    </ul>
+                </nav>  
+            </header>
+                <table class="table table-striped" >
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col">Tipo de Arma</th>
+                        <th scope="col">Munição</th>   
+                        <th scope="col">Alterar</th>
+                        <th scope="col">Remover</th>
+                    </tr>                     
+                    <tbody>
+                        <tr v-for="(a, indice) in armas">                                                
+                            <td>{{indice}}</td>
+                            <td>{{a.nome}}</td>
+                            <td>{{a.valor}}</td>
+                            <td>{{a.tipo_arma.descricao}}</td>
+                            <td>{{a.municao.nomeM}}</td>
+                            <td><button v-on:click="editArma(indice)" class="btn" type="button">Alterar</button></td>
+                            <td><button v-on:click="remoArma(indice)" class="btn" type="button">Remover</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+<br>
+                <form id="formulario">
+                                        
+                    <h3>Formulário para cadastrar uma nova Arma</h3>                        
+
+                        <div class="form-group">
+                            <label for="inputIndice">#:</label>
+                            <input type="text" v-model="nova_arma.indice" class="form-control" id="inputIndice" disabled>
+                        </div>
+
+                        <div class="error" v-if="!$v.nova_arma.nome.required">Nome deve ter no mínimo {{$v.nova_arma.nome.$params.minLength.min}} caracteres e no máximo {{$v.nova_arma.nome.$params.maxLength.max}}.</div>
+                        <div class="form-group">
+                            <label class="form__label" for="inputNome">Nome:</label>
+                            <input class="form__input" type="text" maxlength="30" v-model.trim="$v.nova_arma.nome.$model" :class="status($v.nova_arma.nome)" id="inputNome">
+                        </div>
+                        
+                        <div class="error" v-if="!$v.nova_arma.valor.between">Informe um valor válido entre {{$v.nova_arma.valor.$params.between.min}} e {{$v.nova_arma.valor.$params.between.max}}.</div>
+                        <div class="form-group">
+                            <label class="form__label" for="inputValor">Valor:</label>                            
+                            <input class="form__input" type="number" v-model="$v.nova_arma.valor.$model" :class="status($v.nova_arma.valor)" id="inputValor">
+                        </div>
+
+                        <div class="error" v-if="!$v.nova_arma.tipo_arma.required">Selecione uma opção.</div>
+                      
+                        <div class="form-group">
+                            <label class="form__label" for="selectTipoArma">Tipo da Arma:</label>
+                            <select class="form__input" v-model="$v.nova_arma.tipo_arma.$model" :class="status($v.nova_arma.tipo_arma)" id="selectTipoArma">                                
+                                <option v-for="t in tiposArma" v-bind:value="t">
+                                    {{ t.descricao }}
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="error" v-if="!$v.nova_arma.municao.required">Selecione uma opção.</div>
+                        <div class="form-group">
+                            <label class="form__label" for="selectMunicao">Munição da Arma:</label>
+                            <select class="form__input form-control" style="width:280px;"  v-model="$v.nova_arma.municao.$model" :class="status($v.nova_arma.municao)" id="selectMunicao">                                
+                                <option v-for="a in municoes" v-bind:value="a">
+                                    {{ a.nomeM }}
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <button @click="addArma($v)" class="btn btn-primary" type="button">Salvar</button>
+                        <button @click="cleanFormulario" class="btn btn-primary" type="button">Limpar</button>
+                        
+                        </div>
+                                                                        
+                </form>
+      
+
+        </div>       
+    </body>
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+            let mun = JSON.parse(localStorage.getItem("municoes"))
+            if(mun == null) {
+            mun = []
+        }
+            let localArmas = JSON.parse(localStorage.getItem('armas'))
+            if(localArmas == null){
+                localArmas = []
+        }
+
+            var dados = { 
+                tiposArma: [{codigo: 1, descricao: 'Pistola'},{codigo: 2, descricao: 'Rifle'},{codigo: 3, descricao: 'Submetralhadora'}, {codigo: 4, descricao: 'Escopeta'}, {codigo: 5, descricao: 'Metralhadora'}],
+
+                municoes:  mun, 
+        
+                armas: localArmas,
+
+                nova_arma: {indice: '', nome: '', valor: 0, tipo_arma: {}, municao: {}}
+            };                       
+         
+        Vue.use(window.vuelidate.default);
+
+        const {
+            required,
+            minLength,
+            maxLength,
+            between
+        } = window.validators
+
+          new Vue({ 
+                el: '#app', 
+                data: dados,
+                validations: {
+                    nova_arma: {
+                                    nome: {
+                                        required, 
+                                        minLength: minLength(3),
+                                        maxLength: maxLength(30)
+                                    },
+                                    valor: {
+                                        required,                                        
+                                        between: between(100, 5500)
+                                    },
+                                    tipo_arma: {
+                                        required
+                                    },
+                                    municao: {
+                                        required
+                                    }
+                                    
+                    }
+                },
+                methods: { 
+
+                    status(validation) {
+                        return {
+                            error: validation.$error,
+                            dirty: validation.$dirty
+                        }
+                    },
+
+                    addArma: function (v) {
+                        
+                        if(!v.$invalid){
+
+                            
+                            if(isNaN(parseInt(this.nova_arma.indice))){
+                                
+                                this.armas.push({nome: this.nova_arma.nome, 
+                                                 valor: this.nova_arma.valor, 
+                                                 tipo_arma:this.nova_arma.tipo_arma,
+                                                 municao:this.nova_arma.municao}
+                                                );
+                                alert('Nova Arma Cadastrada !');
+                                localStorage.setItem('armas', JSON.stringify(this.armas))
+
+                            }else{
+
+                                this.armas[this.nova_arma.indice] = {nome: this.nova_arma.nome.trim(), 
+                                                 valor: this.nova_arma.valor.trim(), 
+                                                 tipo_arma:this.nova_arma.tipo_arma,
+                                                 municao:this.nova_arma.municao
+                                                 };
+
+                                alert('Arma alterada !');
+                                localStorage.setItem('armas', JSON.stringify(this.armas))
+                            }
+                            this.cleanFormulario();
+
+                        }else{
+                            alert("Atenção !! Formulário incompleto.");
+                        }
+                    },
+
+                    editArma: function (param_index) {
+
+                        this.nova_arma.indice = param_index;
+                        this.nova_arma.nome = this.armas[param_index].nome; 
+                        this.nova_arma.valor = this.armas[param_index].valor;
+                        this.nova_arma.tipo_arma = this.armas[param_index].tipo_arma;
+                        this.nova_arma.municao = this.armas[param_index].municao;
+                    },
+
+                    remoArma: function(param_index){
+                        
+                        var a = confirm("Deseja realmente remover a Arma " + this.armas[param_index].nome);
+                        if (a == true) {
+                            
+                            this.armas.splice(param_index, 1);
+                            
+                            alert('Removeu a arma. ');
+                            localStorage.setItem('armas', JSON.stringify(this.armas))
+
+                        } else {
+
+                            alert('A Arma ' + this.armas[param_index].nome + " não foi removida.");
+                        }                        
+                        
+                    },
+                    
+                    cleanFormulario: function() {
+
+                        this.nova_arma.indice = '';
+                        this.nova_arma.nome = ''; 
+                        this.nova_arma.valor = 0;
+                        this.nova_arma.tipo_arma = '';
+                        this.nova_arma.municao = '';
+                    }
+
+                }
+            }); 
+        });
+
+    </script> 
+   
+ </html>
